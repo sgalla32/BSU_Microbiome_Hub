@@ -1,0 +1,544 @@
+---
+title: "16-S Analysis in QIIME2"
+output:
+#  bookdown::pdf_document2:
+#    toc: TRUE
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+link-citations: yes
+fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Create Batch Script for Importing and Demuxing Data
+
+With the batch script below, we will be able to import and demux the data. 
+
+In this case we have multiplexed sequence data, meaning the samples are not separated yet based on their barcodes. In order to demultiplex the reads, this requires the metadata file with barcode sequences.
+ 
+To do this, we will use the Qiime2 demux emp-paired plugin. This will demultiplex paired-end sequence data (map barcode reads to sample ids) for data generated with the Earth Microbiome Project (EMP) amplicon sequencing protocol. In code, I indicate which column in that file contains the per-sample barcodes. In the case of data from UCSD, that column name is BarcodeSequences. In this data set, the barcode reads are the reverse complement of those included in the sample metadata file, so I additionally include the --p-rev-comp-mapping-barcodes parameter and --p-rev-comp-barcodes so that the barcode sequence reads will be reverse complemented prior to demultiplexing.
+ 
+Note: Which primers were used doesn’t matter to this step (for q2 workflow), what’s more important is that the data has the non-biological data already stripped. In other words, the linker, primer, barcode, etc, are not in R1 or R2 (barcodes are in the barcode.fastq file). It will use the order of barcode file to work out which sequences from R1 and R2 belongs to which samples.
+
+We are using batch files on the Borah cluster to run this code. The batch script can be put into a text document using nano on the cluster. It can be saved as a file named “QIIME2_Pronghorn_Input_Demux.sbatch”
+
+```markdown
+#!/bin/bash
+#SBATCH -J GRSG_16S
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+# Ensure the temporary directory is set to scratch. 
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# To analyze these data, the sequences must first be imported into an artifact of type EMPPairedEndSequences.
+# Create the *.qza file: 
+
+qiime tools import \
+  --type EMPPairedEndSequences \
+  --input-path ${Sage_Grouse_16S}/Reads \
+  --output-path ${Sage_Grouse_16S}/emp-paired-end-sequences.qza
+
+# Demux
+qiime demux emp-paired \
+	--m-barcodes-file ${Sage_Grouse_16S}/110599_mapping_fileRename.tsv \
+	--m-barcodes-column BarcodeSequence \
+	--p-rev-comp-barcodes \
+	--p-rev-comp-mapping-barcodes \
+	--i-seqs ${Sage_Grouse_16S}/emp-paired-end-sequences.qza \
+	--o-per-sample-sequences ${Sage_Grouse_16S}/demux_output/demux.qza \
+	--o-error-correction-details ${Sage_Grouse_16S}/demux_output/demux-details.qza
+
+# Summarize
+qiime demux summarize \
+  --i-data ${Sage_Grouse_16S}/demux_output/demux.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/per_sample_sequences.qzv
+
+```
+
+Once you have this file saved as an *sbatch, you can run this job on the cluster by using the following commands: 
+
+```markdown
+conda activate qiime2-2021.4
+sbatch QIIME2_Pronghorn_Input_Demux.sbatch
+
+#Check on your run
+squeue
+
+#Cancel your run
+scancel
+
+```
+
+# Visualizing demultiplexed data
+
+I use scp to import per_sample_sequences.qzv to my local computer using the following command:
+
+```markdown
+#If you’re still on Borah, use the following command:
+exit
+
+#Make a local directory
+mkdir ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
+cd ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
+
+#Copy 
+scp userlogin@borah-login.boisestate.edu:~/scratch/Path_To_File/per_sample_sequences.qzv ./
+```
+
+On your local computer, go to https://view.qiime2.org/, drag per_sample_sequences.qzv to the portal, and view some outputs:
+
+Discussion:
+ 
+This file is visualization of the frequency of sequence counts and also provides interactive plots for forward and reverse sequences which will be used to trim for DADA2 pipeline.
+
+Distribution plot:  This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).
+ 
+The quality scores at the ends of each direction impact the results of denoising.  The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.
+ 
+Forward (determining trim-left and trunc parameters)
+
+
+
+ 
+At position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 33. When zooming out to look at the plot as a whole, after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look at the right side of the graph and at position 151. At this position the standard deviation of the quality score distribution is much more varied and the lower whisker is at quality score 24 and the upper whisker is at 39. I therefore chose to trim the forward sequences from the left by 12 and set the trunc length at 150.
+ 
+Reverse (determining trim-left and trunc parameters)
+
+
+ 
+
+
+Again, at position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 34. Again, when zooming out to look at the plot as a whole after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look the right side of the graph and at position 151, the quality score distribution is much more varied and the lower whisker is at quality score 15 and the upper whisker is at 39. I therefore chose to trim the reverse sequences from the left by 12 and set the trunc length at 150.
+ 
+
+
+
+# DADA2
+
+This method denoises paired-end sequences, dereplicates them, and filters chimeras (i.e., artifacts from the PCR process from 2+ biological sequences incorrectly joined together). In the dereplication process all the quality-filtered sequences are collapsed into a set of unique reads, making downstream computation easier. 
+
+Inputs:
+  --i-demultiplexed-seqs ARTIFACT (The paired-end demultiplexed sequences to be denoised)                            
+Parameters:
+  --p-trunc-len-f INTEGER
+ 
+  --p-trunc-len-r INTEGER
+ 
+  --p-trim-left-f INTEGER
+ 
+  --p-trim-left-r INTEGER
+ 
+  --p-max-ee-f NUMBER   
+  
+Forward reads with number of expected errors higher than this value will be discarded. The default value is 2, I left it alone.
+ 
+  --p-max-ee-r NUMBER   
+Reverse reads with number of expected errors higher than this value will be discarded.  The default value is 2, I left it alone
+ 
+  --p-trunc-q INTEGER   
+Reads are truncated at the first instance of a quality score less than or equal to this value. If the resulting read is then shorter than `trunc-len-f` or `trunc-len-r` it is discarded. Default is 2, I left it alone.
+                 
+  --p-chimera-method TEXT
+     	The method used to remove chimeras. "consensus" Chimeras are detected in samples individually, and sequences found chimeric in a sufficient fraction of samples are removed. Default is consensus and I left it alone.
+ 
+  --p-min-fold-parent-over-abundance NUMBER
+The minimum abundance of potential parents of a sequence being tested as chimeric, expressed as a fold-change versus the abundance of the sequence being tested. Default is 1 and I left it alone.
+ 
+  --p-n-reads-learn INTEGER:
+The number of reads to use when training the error model. Smaller numbers will result in a shorter run time but a less reliable error model. Default is 1, 000, 000 I left it alone.
+                                                           
+  --p-hashed-feature-ids
+The feature ids in the resulting table will be presented as hashes of the sequences defining each feature. Default is TRUE so I left it alone.
+
+
+We used the following batch script below to run through DADA2:
+
+```markdown
+#!/bin/bash
+#SBATCH -J GRSG_16S_DADA2
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# Denoise
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs ${Sage_Grouse_16S}/demux_output/demux.qza \
+  --p-trim-left-f 12 \
+  --p-trim-left-r 12 \
+  --p-trunc-len-f 150 \
+  --p-trunc-len-r 150 \
+  --p-n-threads 10 \
+  --o-representative-sequences ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+  --o-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --o-denoising-stats ${Sage_Grouse_16S}/demux_output/stats-dada2.qza
+
+# Feature table
+qiime feature-table summarize   \
+  --i-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/table-dada2.qzv \
+  --m-sample-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv
+
+# Representative sequences
+qiime feature-table tabulate-seqs \
+  --i-data ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qzv
+
+# Denoising Stats
+qiime metadata tabulate \
+  --m-input-file ${Sage_Grouse_16S}/demux_output/stats-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/stats-dada2.qzv
+
+## Export ASV table
+
+qiime tools export \
+  --input-path ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --output-path ${Sage_Grouse_16S}/exported-files
+
+biom convert -i ${Sage_Grouse_16S}/exported-files/feature-table.biom \
+-o ${Sage_Grouse_16S}/exported-files/asv-table-dada2.txt \
+--to-tsv 
+
+```
+
+I use scp to import table-dada2.qzv to my local computer using the following command:
+
+```markdown
+
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/table-dada2.qzv ./
+
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/stats-dada2.qzv ./
+
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/rep-seqs-dada2.qzv ./
+
+```
+
+Then, I go to https://view.qiime2.org/, drag table-dada2.qzv to the portal, and view some outputs:
+
+
+# Assign Taxonomy to Features
+
+In order to assign taxonomy, I downloaded pre-existing SILVA classifiers from the QIIME2 website: https://docs.qiime2.org/2021.2/data-resources/
+
+This includes:
+	Silva 138 SSURef NR99 515F/806R region sequences 
+	Silva 138 SSURef NR99 515F/806R region taxonomy
+	Silva 128 SEPP reference database
+
+These can be downloaded directly to the cluster using the following commands. Make sure that you’re in the correct database. 
+
+```markdown
+cd ~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/
+wget https://data.qiime2.org/2021.2/common/silva-138-99-seqs-515-806.qza
+wget https://data.qiime2.org/2021.2/common/silva-138-99-tax-515-806.qza
+wget https://data.qiime2.org/2021.2/common/sepp-refs-silva-128.qza
+```
+
+I created the following batch script to roll through taxonomy and tree building:
+
+```markdown
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Taxonomy
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# Taxonomy: Train the classifier
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads ${Sage_Grouse_16S}/silva-138-99-seqs-515-806.qza \
+  --i-reference-taxonomy ${Sage_Grouse_16S}/silva-138-99-tax-515-806.qza \
+  --o-classifier ${Sage_Grouse_16S}/classifier.qza 
+
+#Phylogenetic Tree
+qiime fragment-insertion sepp \
+    --i-representative-sequences ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+    --i-reference-database ${Sage_Grouse_16S}/sepp-refs-silva-128.qza \
+    --p-threads 4 \
+    --o-tree ${Sage_Grouse_16S}/sepp-tree.qza \
+    --o-placements ${Sage_Grouse_16S}/sepp-placements.qza
+
+qiime feature-classifier classify-sklearn \
+--i-reads ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+--i-classifier ${Sage_Grouse_16S}/classifier.qza \
+--o-classification ${Sage_Grouse_16S}/taxonomy.qza
+```
+
+# Filter and Vizualize Alpha Rarefaction 
+
+Diversity analysis can be performed via the q2_diversity plug in QIIME 2’s diversity analyses are available through the q2-diversity plugin, which supports computing alpha and beta diversity metrics, applying statistical methods, and generates visual files.
+
+Filter Table to exclude Eukaryota, Archaea, and Unassigned
+Alpha Rarefaction
+
+This next set of code will produce a graph with multiple curves that show the impact of rarefaction on alpha diversity. This plot is used to determine if the richness of samples has been fully sequenced. If the lines level out that means that incorporating additional sequences beyond that sampling depth would not result in more features. The most important parameter here is the ---p-max-depth, this is determined by looking at the feature table you imported in q2view.org. Usually, a value somewhere around the median frequency works well, but you can increase/decrease based on the rarefaction plotting.
+
+```markdown
+
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+qiime taxa filter-table \
+--i-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+--i-taxonomy ${Sage_Grouse_16S}/taxonomy.qza \
+--p-mode contains \
+--p-exclude D_0__Archaea,D_0__Eukaryota \
+--o-filtered-table ${Sage_Grouse_16S}/filtered_table.qza
+
+qiime diversity alpha-rarefaction \
+--i-table ${Sage_Grouse_16S}/filtered_table.qza \
+--i-phylogeny ${Sage_Grouse_16S}/sepp-tree.qza \
+--p-max-depth 15000 \
+--m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv \
+--o-visualization ${Sage_Grouse_16S}/alpha-rarefaction.qzv
+```
+
+Output visualizations:
+alpha-rarefaction.qzv (click and drag to view in qiime2view.org)
+
+# Core Diversity Metrics
+ 
+Core Metrics
+Qiime2 offers a function called core-metrics-phylogenetic which rarefies your feature table to a specified depth, computes several alpha and beta diversity metrics, and produces principle coordinates analysis (PCoA) plots for each of the beta diversity metrics.
+The metrics computed are:
+ 
+Alpha Diversity
+·   	Shannon’s diversity index (a quantitative measure of community richness) (Shannon & Weaver, 1949)
+·   	Observed features (a quantitative measure of community richness, called “observed OTUs” here for historical reasons);
+·   	Evenness (or Pielou’s Evenness; a measure of community evenness) (Pielou, 1966);
+·   	Faith’s Phylogenetic Diversity (a qualitative measure of community richness that incorporates phylogenetic relationships between the features) (Faith, 1992); this metric is sometimes referred to as PD_whole_tree, but we discourage the use of that name in favor of Faith’s Phylogenetic Diversity or Faith’s PD
+Beta diversity metrics
+·   	Jaccard distance (a qualitative measure of community dissimilarity) (P. Jaccard, 1908);
+·   	Bray-Curtis distance (a quantitative measure of community dissimilarity) (Sørensen, 1948);
+ 
+The most important parameter to set here is the –p-sampling-depth. This number is determined from the Feature Table file you downloaded above. Here, you want to choose a value that is as high as possible while excluding as few samples as possible.
+
+```markdown
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+qiime diversity core-metrics-phylogenetic \
+--i-table ${Sage_Grouse_16S}/filtered_table.qza \
+--i-phylogeny ${Sage_Grouse_16S}/sepp-tree.qza \
+--m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv \
+--p-sampling-depth 5900 \
+--output-dir ${Sage_Grouse_16S}/core-metrics-results
+
+
+Output artifacts:
+core-metrics-results/faith_pd_vector.qza
+core-metrics-results/unweighted_unifrac_distance_matrix.qza
+core-metrics-results/bray_curtis_pcoa_results.qza
+core-metrics-results/shannon_vector.qza
+core-metrics-results/rarefied_table.qza
+core-metrics-results/weighted_unifrac_distance_matrix.qza
+core-metrics-results/jaccard_pcoa_results.qza
+core-metrics-results/observed_otus_vector.qza
+core-metrics-results/weighted_unifrac_pcoa_results.qza
+core-metrics-results/jaccard_distance_matrix.qza
+core-metrics-results/evenness_vector.qza
+core-metrics-results/bray_curtis_distance_matrix.qza
+core-metrics-results/unweighted_unifrac_pcoa_results.qza
+ 
+Output visualizations:
+core-metrics-results/unweighted_unifrac_emperor.qzv
+core-metrics-results/jaccard_emperor.qzv
+core-metrics-results/bray_curtis_emperor.qzv
+core-metrics-results/weighted_unifrac_emperor.qzv
+ 
+All of these outputs are saved in your directory. The files ending in .qzv can be clicked and dragged into https://view.qiime2.org/
+```
+
+# Alpha Diversity
+ 
+Group Significance
+So now we can begin to explore the composition of the microbial communities within our samples using our metadata file downloaded earlier. We start by testing for associations between categorical metadata columns and the alpha diversity data we just produced. We’ll used Faith’s Phylogenetic diversity and evenness metrics.
+
+```markdown
+
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+## Alpha Diversity
+
+#Faith’s PD
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/faith_pd_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/faith-pd-group-significance.qzv
+
+#Eveness Metric
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/evenness_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/evenness-group-significance.qzv
+	
+#Shannon’s Metric
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/shannon_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/shannon_group-significance.qzv
+
+Output visualizations:
+core-metrics-results/faith-pd-group-significance.qzv
+core-metrics-results/evenness-group-significance.qzv
+core-metrics-results/shannon_group-significance.qzv
+```
+ 
+In the visualizer on qiime2view.org you can experiment with different columns of categorical data from the metadata file to answer the questions below.
+ 
+Which categorical sample metadata columns are most strongly associated with the differences in microbial community richness? Are these differences statistically significant?
+ 
+Which categorical sample metadata columns are most strongly associated with the differences in microbial community evenness? Are these differences statistically significant?
+
+# Beta Diversity
+
+```markdown
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+## Beta Diversity
+
+#Unweighted Unifrac
+qiime diversity beta-group-significance --i-distance-matrix ${Sage_Grouse_16S}/core-metrics-results/unweighted_unifrac_distance_matrix.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --m-metadata-column sample_type --o-visualization ${Sage_Grouse_16S}/core-metrics-results/unweighted-unifrac-sample-type-significance.qzv --p-pairwise
+
+```
+
+Output visualizations
+core-metrics-results/unweighted-unifrac-sample-type-significance.qzv
+
+You can view these outputs in the visualizer on qiime2view.org and ask the following questions:
+ 
+Are the associations between locations and differences in microbial composition statistically significant?
+How about year? What specific pairs of years are significantly different from each other?
+
+# PCoA
+
+Create a PCoA plot to explore beta diversity metric.
+Ordination is commonly used to explore microbial community composition in the context of sample metadata. Qiime2 work flow uses the Emperor tool to explore principal coordinates (PCoA) plots in the context of sample metadata. The core—metrics function produced some PCoA plots which you can use to generate interactive visualizations. Generate Emperor plots for unweighted UniFrac and Bray-Curtis so that the resulting plot will contain axes for principal coordinate 1, principal coordinate 2, and year. The last axis will be used to explore how these samples changed over time.
+ 
+```markdown
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a 'shortcut' to the folder you're going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+## Beta Diversity
+
+qiime emperor plot --i-pcoa ${Sage_Grouse_16S}/core-metrics-results/unweighted_unifrac_pcoa_results.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/unweighted-unifrac-emperor_text.qzv
+
+```

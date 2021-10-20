@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>16-S Analysis in QIIME2</title>
+
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Microbiome Hub</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="Getting_Started.html">Getting Started</a>
+</li>
+<li>
+  <a href="Unix_Linux_Cheat_sheet.html">Unix/Linux Cheat Sheet </a>
+</li>
+<li>
+  <a href="Data_Download.html">Data Download</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">16-S Analysis in QIIME2</h1>
+
+</div>
+
+
+<div id="create-batch-script-for-importing-and-demuxing-data" class="section level1">
+<h1><span class="header-section-number">1</span> Create Batch Script for Importing and Demuxing Data</h1>
+<p>With the batch script below, we will be able to import and demux the data.</p>
+<p>In this case we have multiplexed sequence data, meaning the samples are not separated yet based on their barcodes. In order to demultiplex the reads, this requires the metadata file with barcode sequences.</p>
+<p>To do this, we will use the Qiime2 demux emp-paired plugin. This will demultiplex paired-end sequence data (map barcode reads to sample ids) for data generated with the Earth Microbiome Project (EMP) amplicon sequencing protocol. In code, I indicate which column in that file contains the per-sample barcodes. In the case of data from UCSD, that column name is BarcodeSequences. In this data set, the barcode reads are the reverse complement of those included in the sample metadata file, so I additionally include the –p-rev-comp-mapping-barcodes parameter and –p-rev-comp-barcodes so that the barcode sequence reads will be reverse complemented prior to demultiplexing.</p>
+<p>Note: Which primers were used doesn’t matter to this step (for q2 workflow), what’s more important is that the data has the non-biological data already stripped. In other words, the linker, primer, barcode, etc, are not in R1 or R2 (barcodes are in the barcode.fastq file). It will use the order of barcode file to work out which sequences from R1 and R2 belongs to which samples.</p>
+<p>We are using batch files on the Borah cluster to run this code. The batch script can be put into a text document using nano on the cluster. It can be saved as a file named “QIIME2_Pronghorn_Input_Demux.sbatch”</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J GRSG_16S
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+# Ensure the temporary directory is set to scratch. 
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# To analyze these data, the sequences must first be imported into an artifact of type EMPPairedEndSequences.
+# Create the *.qza file: 
+
+qiime tools import \
+  --type EMPPairedEndSequences \
+  --input-path ${Sage_Grouse_16S}/Reads \
+  --output-path ${Sage_Grouse_16S}/emp-paired-end-sequences.qza
+
+# Demux
+qiime demux emp-paired \
+    --m-barcodes-file ${Sage_Grouse_16S}/110599_mapping_fileRename.tsv \
+    --m-barcodes-column BarcodeSequence \
+    --p-rev-comp-barcodes \
+    --p-rev-comp-mapping-barcodes \
+    --i-seqs ${Sage_Grouse_16S}/emp-paired-end-sequences.qza \
+    --o-per-sample-sequences ${Sage_Grouse_16S}/demux_output/demux.qza \
+    --o-error-correction-details ${Sage_Grouse_16S}/demux_output/demux-details.qza
+
+# Summarize
+qiime demux summarize \
+  --i-data ${Sage_Grouse_16S}/demux_output/demux.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/per_sample_sequences.qzv
+</code></pre>
+<p>Once you have this file saved as an *sbatch, you can run this job on the cluster by using the following commands:</p>
+<pre class="markdown"><code>conda activate qiime2-2021.4
+sbatch QIIME2_Pronghorn_Input_Demux.sbatch
+
+#Check on your run
+squeue
+
+#Cancel your run
+scancel
+</code></pre>
+</div>
+<div id="visualizing-demultiplexed-data" class="section level1">
+<h1><span class="header-section-number">2</span> Visualizing demultiplexed data</h1>
+<p>I use scp to import per_sample_sequences.qzv to my local computer using the following command:</p>
+<pre class="markdown"><code>#If you’re still on Borah, use the following command:
+exit
+
+#Make a local directory
+mkdir ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
+cd ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
+
+#Copy 
+scp userlogin@borah-login.boisestate.edu:~/scratch/Path_To_File/per_sample_sequences.qzv ./</code></pre>
+<p>On your local computer, go to <a href="https://view.qiime2.org/" class="uri">https://view.qiime2.org/</a>, drag per_sample_sequences.qzv to the portal, and view some outputs:</p>
+<p>Discussion:</p>
+<p>This file is visualization of the frequency of sequence counts and also provides interactive plots for forward and reverse sequences which will be used to trim for DADA2 pipeline.</p>
+<p>Distribution plot: This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).</p>
+<p>The quality scores at the ends of each direction impact the results of denoising. The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.</p>
+<p>Forward (determining trim-left and trunc parameters)</p>
+<p>At position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 33. When zooming out to look at the plot as a whole, after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look at the right side of the graph and at position 151. At this position the standard deviation of the quality score distribution is much more varied and the lower whisker is at quality score 24 and the upper whisker is at 39. I therefore chose to trim the forward sequences from the left by 12 and set the trunc length at 150.</p>
+<p>Reverse (determining trim-left and trunc parameters)</p>
+<p>Again, at position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 34. Again, when zooming out to look at the plot as a whole after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look the right side of the graph and at position 151, the quality score distribution is much more varied and the lower whisker is at quality score 15 and the upper whisker is at 39. I therefore chose to trim the reverse sequences from the left by 12 and set the trunc length at 150.</p>
+</div>
+<div id="dada2" class="section level1">
+<h1><span class="header-section-number">3</span> DADA2</h1>
+<p>This method denoises paired-end sequences, dereplicates them, and filters chimeras (i.e., artifacts from the PCR process from 2+ biological sequences incorrectly joined together). In the dereplication process all the quality-filtered sequences are collapsed into a set of unique reads, making downstream computation easier.</p>
+<p>Inputs:
+–i-demultiplexed-seqs ARTIFACT (The paired-end demultiplexed sequences to be denoised)<br />
+Parameters:
+–p-trunc-len-f INTEGER</p>
+<p>–p-trunc-len-r INTEGER</p>
+<p>–p-trim-left-f INTEGER</p>
+<p>–p-trim-left-r INTEGER</p>
+<p>–p-max-ee-f NUMBER</p>
+<p>Forward reads with number of expected errors higher than this value will be discarded. The default value is 2, I left it alone.</p>
+<p>–p-max-ee-r NUMBER<br />
+Reverse reads with number of expected errors higher than this value will be discarded. The default value is 2, I left it alone</p>
+<p>–p-trunc-q INTEGER<br />
+Reads are truncated at the first instance of a quality score less than or equal to this value. If the resulting read is then shorter than <code>trunc-len-f</code> or <code>trunc-len-r</code> it is discarded. Default is 2, I left it alone.</p>
+<p>–p-chimera-method TEXT
+The method used to remove chimeras. “consensus” Chimeras are detected in samples individually, and sequences found chimeric in a sufficient fraction of samples are removed. Default is consensus and I left it alone.</p>
+<p>–p-min-fold-parent-over-abundance NUMBER
+The minimum abundance of potential parents of a sequence being tested as chimeric, expressed as a fold-change versus the abundance of the sequence being tested. Default is 1 and I left it alone.</p>
+<p>–p-n-reads-learn INTEGER:
+The number of reads to use when training the error model. Smaller numbers will result in a shorter run time but a less reliable error model. Default is 1, 000, 000 I left it alone.</p>
+<p>–p-hashed-feature-ids
+The feature ids in the resulting table will be presented as hashes of the sequences defining each feature. Default is TRUE so I left it alone.</p>
+<p>We used the following batch script below to run through DADA2:</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J GRSG_16S_DADA2
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# Denoise
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs ${Sage_Grouse_16S}/demux_output/demux.qza \
+  --p-trim-left-f 12 \
+  --p-trim-left-r 12 \
+  --p-trunc-len-f 150 \
+  --p-trunc-len-r 150 \
+  --p-n-threads 10 \
+  --o-representative-sequences ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+  --o-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --o-denoising-stats ${Sage_Grouse_16S}/demux_output/stats-dada2.qza
+
+# Feature table
+qiime feature-table summarize   \
+  --i-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/table-dada2.qzv \
+  --m-sample-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv
+
+# Representative sequences
+qiime feature-table tabulate-seqs \
+  --i-data ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qzv
+
+# Denoising Stats
+qiime metadata tabulate \
+  --m-input-file ${Sage_Grouse_16S}/demux_output/stats-dada2.qza \
+  --o-visualization ${Sage_Grouse_16S}/demux_output/stats-dada2.qzv
+
+## Export ASV table
+
+qiime tools export \
+  --input-path ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+  --output-path ${Sage_Grouse_16S}/exported-files
+
+biom convert -i ${Sage_Grouse_16S}/exported-files/feature-table.biom \
+-o ${Sage_Grouse_16S}/exported-files/asv-table-dada2.txt \
+--to-tsv 
+</code></pre>
+<p>I use scp to import table-dada2.qzv to my local computer using the following command:</p>
+<pre class="markdown"><code>
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/table-dada2.qzv ./
+
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/stats-dada2.qzv ./
+
+scp sgalla@borah-login.boisestate.edu:~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/demux_output/rep-seqs-dada2.qzv ./
+</code></pre>
+<p>Then, I go to <a href="https://view.qiime2.org/" class="uri">https://view.qiime2.org/</a>, drag table-dada2.qzv to the portal, and view some outputs:</p>
+</div>
+<div id="assign-taxonomy-to-features" class="section level1">
+<h1><span class="header-section-number">4</span> Assign Taxonomy to Features</h1>
+<p>In order to assign taxonomy, I downloaded pre-existing SILVA classifiers from the QIIME2 website: <a href="https://docs.qiime2.org/2021.2/data-resources/" class="uri">https://docs.qiime2.org/2021.2/data-resources/</a></p>
+<p>This includes:
+Silva 138 SSURef NR99 515F/806R region sequences
+Silva 138 SSURef NR99 515F/806R region taxonomy
+Silva 128 SEPP reference database</p>
+<p>These can be downloaded directly to the cluster using the following commands. Make sure that you’re in the correct database.</p>
+<pre class="markdown"><code>cd ~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021/
+wget https://data.qiime2.org/2021.2/common/silva-138-99-seqs-515-806.qza
+wget https://data.qiime2.org/2021.2/common/silva-138-99-tax-515-806.qza
+wget https://data.qiime2.org/2021.2/common/sepp-refs-silva-128.qza</code></pre>
+<p>I created the following batch script to roll through taxonomy and tree building:</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J SageGrouse_16S_Taxonomy
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+# Taxonomy: Train the classifier
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads ${Sage_Grouse_16S}/silva-138-99-seqs-515-806.qza \
+  --i-reference-taxonomy ${Sage_Grouse_16S}/silva-138-99-tax-515-806.qza \
+  --o-classifier ${Sage_Grouse_16S}/classifier.qza 
+
+#Phylogenetic Tree
+qiime fragment-insertion sepp \
+    --i-representative-sequences ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+    --i-reference-database ${Sage_Grouse_16S}/sepp-refs-silva-128.qza \
+    --p-threads 4 \
+    --o-tree ${Sage_Grouse_16S}/sepp-tree.qza \
+    --o-placements ${Sage_Grouse_16S}/sepp-placements.qza
+
+qiime feature-classifier classify-sklearn \
+--i-reads ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza \
+--i-classifier ${Sage_Grouse_16S}/classifier.qza \
+--o-classification ${Sage_Grouse_16S}/taxonomy.qza</code></pre>
+</div>
+<div id="filter-and-vizualize-alpha-rarefaction" class="section level1">
+<h1><span class="header-section-number">5</span> Filter and Vizualize Alpha Rarefaction</h1>
+<p>Diversity analysis can be performed via the q2_diversity plug in QIIME 2’s diversity analyses are available through the q2-diversity plugin, which supports computing alpha and beta diversity metrics, applying statistical methods, and generates visual files.</p>
+<p>Filter Table to exclude Eukaryota, Archaea, and Unassigned
+Alpha Rarefaction</p>
+<p>This next set of code will produce a graph with multiple curves that show the impact of rarefaction on alpha diversity. This plot is used to determine if the richness of samples has been fully sequenced. If the lines level out that means that incorporating additional sequences beyond that sampling depth would not result in more features. The most important parameter here is the —p-max-depth, this is determined by looking at the feature table you imported in q2view.org. Usually, a value somewhere around the median frequency works well, but you can increase/decrease based on the rarefaction plotting.</p>
+<pre class="markdown"><code>
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+qiime taxa filter-table \
+--i-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza \
+--i-taxonomy ${Sage_Grouse_16S}/taxonomy.qza \
+--p-mode contains \
+--p-exclude D_0__Archaea,D_0__Eukaryota \
+--o-filtered-table ${Sage_Grouse_16S}/filtered_table.qza
+
+qiime diversity alpha-rarefaction \
+--i-table ${Sage_Grouse_16S}/filtered_table.qza \
+--i-phylogeny ${Sage_Grouse_16S}/sepp-tree.qza \
+--p-max-depth 15000 \
+--m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv \
+--o-visualization ${Sage_Grouse_16S}/alpha-rarefaction.qzv</code></pre>
+<p>Output visualizations:
+alpha-rarefaction.qzv (click and drag to view in qiime2view.org)</p>
+</div>
+<div id="core-diversity-metrics" class="section level1">
+<h1><span class="header-section-number">6</span> Core Diversity Metrics</h1>
+<p>Core Metrics
+Qiime2 offers a function called core-metrics-phylogenetic which rarefies your feature table to a specified depth, computes several alpha and beta diversity metrics, and produces principle coordinates analysis (PCoA) plots for each of the beta diversity metrics.
+The metrics computed are:</p>
+<p>Alpha Diversity
+· Shannon’s diversity index (a quantitative measure of community richness) (Shannon &amp; Weaver, 1949)
+· Observed features (a quantitative measure of community richness, called “observed OTUs” here for historical reasons);
+· Evenness (or Pielou’s Evenness; a measure of community evenness) (Pielou, 1966);
+· Faith’s Phylogenetic Diversity (a qualitative measure of community richness that incorporates phylogenetic relationships between the features) (Faith, 1992); this metric is sometimes referred to as PD_whole_tree, but we discourage the use of that name in favor of Faith’s Phylogenetic Diversity or Faith’s PD
+Beta diversity metrics
+· Jaccard distance (a qualitative measure of community dissimilarity) (P. Jaccard, 1908);
+· Bray-Curtis distance (a quantitative measure of community dissimilarity) (Sørensen, 1948);</p>
+<p>The most important parameter to set here is the –p-sampling-depth. This number is determined from the Feature Table file you downloaded above. Here, you want to choose a value that is as high as possible while excluding as few samples as possible.</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+qiime diversity core-metrics-phylogenetic \
+--i-table ${Sage_Grouse_16S}/filtered_table.qza \
+--i-phylogeny ${Sage_Grouse_16S}/sepp-tree.qza \
+--m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv \
+--p-sampling-depth 5900 \
+--output-dir ${Sage_Grouse_16S}/core-metrics-results
+
+
+Output artifacts:
+core-metrics-results/faith_pd_vector.qza
+core-metrics-results/unweighted_unifrac_distance_matrix.qza
+core-metrics-results/bray_curtis_pcoa_results.qza
+core-metrics-results/shannon_vector.qza
+core-metrics-results/rarefied_table.qza
+core-metrics-results/weighted_unifrac_distance_matrix.qza
+core-metrics-results/jaccard_pcoa_results.qza
+core-metrics-results/observed_otus_vector.qza
+core-metrics-results/weighted_unifrac_pcoa_results.qza
+core-metrics-results/jaccard_distance_matrix.qza
+core-metrics-results/evenness_vector.qza
+core-metrics-results/bray_curtis_distance_matrix.qza
+core-metrics-results/unweighted_unifrac_pcoa_results.qza
+ 
+Output visualizations:
+core-metrics-results/unweighted_unifrac_emperor.qzv
+core-metrics-results/jaccard_emperor.qzv
+core-metrics-results/bray_curtis_emperor.qzv
+core-metrics-results/weighted_unifrac_emperor.qzv
+ 
+All of these outputs are saved in your directory. The files ending in .qzv can be clicked and dragged into https://view.qiime2.org/</code></pre>
+</div>
+<div id="alpha-diversity" class="section level1">
+<h1><span class="header-section-number">7</span> Alpha Diversity</h1>
+<p>Group Significance
+So now we can begin to explore the composition of the microbial communities within our samples using our metadata file downloaded earlier. We start by testing for associations between categorical metadata columns and the alpha diversity data we just produced. We’ll used Faith’s Phylogenetic diversity and evenness metrics.</p>
+<pre class="markdown"><code>
+#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+
+## Alpha Diversity
+
+#Faith’s PD
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/faith_pd_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/faith-pd-group-significance.qzv
+
+#Eveness Metric
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/evenness_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/evenness-group-significance.qzv
+    
+#Shannon’s Metric
+qiime diversity alpha-group-significance --i-alpha-diversity ${Sage_Grouse_16S}/core-metrics-results/shannon_vector.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/shannon_group-significance.qzv
+
+Output visualizations:
+core-metrics-results/faith-pd-group-significance.qzv
+core-metrics-results/evenness-group-significance.qzv
+core-metrics-results/shannon_group-significance.qzv</code></pre>
+<p>In the visualizer on qiime2view.org you can experiment with different columns of categorical data from the metadata file to answer the questions below.</p>
+<p>Which categorical sample metadata columns are most strongly associated with the differences in microbial community richness? Are these differences statistically significant?</p>
+<p>Which categorical sample metadata columns are most strongly associated with the differences in microbial community evenness? Are these differences statistically significant?</p>
+</div>
+<div id="beta-diversity" class="section level1">
+<h1><span class="header-section-number">8</span> Beta Diversity</h1>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+## Beta Diversity
+
+#Unweighted Unifrac
+qiime diversity beta-group-significance --i-distance-matrix ${Sage_Grouse_16S}/core-metrics-results/unweighted_unifrac_distance_matrix.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --m-metadata-column sample_type --o-visualization ${Sage_Grouse_16S}/core-metrics-results/unweighted-unifrac-sample-type-significance.qzv --p-pairwise
+</code></pre>
+<p>Output visualizations
+core-metrics-results/unweighted-unifrac-sample-type-significance.qzv</p>
+<p>You can view these outputs in the visualizer on qiime2view.org and ask the following questions:</p>
+<p>Are the associations between locations and differences in microbial composition statistically significant?
+How about year? What specific pairs of years are significantly different from each other?</p>
+</div>
+<div id="pcoa" class="section level1">
+<h1><span class="header-section-number">9</span> PCoA</h1>
+<p>Create a PCoA plot to explore beta diversity metric.
+Ordination is commonly used to explore microbial community composition in the context of sample metadata. Qiime2 work flow uses the Emperor tool to explore principal coordinates (PCoA) plots in the context of sample metadata. The core—metrics function produced some PCoA plots which you can use to generate interactive visualizations. Generate Emperor plots for unweighted UniFrac and Bray-Curtis so that the resulting plot will contain axes for principal coordinate 1, principal coordinate 2, and year. The last axis will be used to explore how these samples changed over time.</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J SageGrouse_16S_Rarefaction
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@boisestate.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+# Ensure that you call conda activate qiime2-2021.2 before you start. 
+
+export TMPDIR=~/scratch
+
+# Create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+Sage_Grouse_16S=~/scratch/Sage_Grouse_UCSD_Raw_Data/QIIME2_August2021
+## Beta Diversity
+
+qiime emperor plot --i-pcoa ${Sage_Grouse_16S}/core-metrics-results/unweighted_unifrac_pcoa_results.qza --m-metadata-file ${Sage_Grouse_16S}/12581_20210414-100355.tsv --o-visualization ${Sage_Grouse_16S}/core-metrics-results/unweighted-unifrac-emperor_text.qzv
+</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+---
+title: "Getting Started"
+output:
+#  bookdown::pdf_document2:
+#    toc: TRUE
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+link-citations: yes
+fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Borah
+
+You can get a Borah account by contacting the [Boise State University HPC Team](researchcomputing@boisestate.edu). When asking for a Borah account, you will need to provide the following information:
+
+- Request Account on the HPC SYSTEM: system name
+- Project: Project Name or Grant Information
+- Description of Research: Short description of research to be done on the cluster.
+- Project PI Name: PI’s-Name.
+- Email Address of Requestor: user@boisestate.edu
+
+Make sure that you let them know you need access to the BioCompute node, which is a node that is dedicated entirely to biology. This will ensure that your jobs get priority.
+
+# Access to the Biocompute CIFS-Share
+
+When you contact the HPC Team to create a Borah account, you can also ask them to add your credentials to the BSU Biocompute CIFS-Share. To access the CIFS-Share on a Mac, you can use the following:
+
+- Click Finder
+- Click on 'Go' -> 'Connect to server...'
+- Type 'smb://cifs-prd-01/Research/BioCompute/' into the dropdown.
+- Click 'Connect'
+
+# How do download Anaconda and QIIME2 to your Borah account:
+
+Anaconda is a program that helps with the installation of hundreds of genetic software for Linux.
+
+First, we need to ssh (secure shell) to get onto Borah:
+
+```markdown
+ssh -XC username@borah-login.boisestate.edu
+# Enter your password, then you're on Borah.
+```
+
+Now, we will download the script that installs the most current version of Anaconda. We will download this using wget:
+
+
+```markdown
+wget -O - https://www.anaconda.com/distribution/ 2>/dev/null | sed -ne 's@.*\(https:\/\/repo\.anaconda\.com\/archive\/Anaconda3-.*-Linux-x86_64\.sh\)\">64-Bit (x86) Installer.*@\1@p' | xargs wget
+```
+
+Now, we will execute this bash script using bash:
+
+```markdown
+bash Anaconda3-2021.05-Linux-x86_64.sh
+```
+Now, we will Install QIIME2 using conda. We will download a *.yml file using wget to do this:
+
+```markdown
+wget https://data.qiime2.org/distro/core/qiime2-2021.4-py38-linux-conda.yml
+
+# Use conda to create an environment:
+conda env create -n qiime2-2021.4 --file qiime2-2021.4-py38-linux-conda.yml
+
+# Optional cleanup
+rm qiime2-2021.4-py38-linux-conda.yml
+
+# Test to see if it works, using conda activate:
+conda activate qiime2-2021.4
+conda deactivate 
+```
+
+# QIITA
+
+Many of the data sets we are working with are found on University of California San Diego's site [QIITA] (https://qiita.ucsd.edu/). You can create an account here. Email Stephanie Galla [stephaniegalla@boisestate.edu](stephaniegalla@boisestate.edu) to ask her to add you to projects. 
+
+

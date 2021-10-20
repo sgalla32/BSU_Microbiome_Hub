@@ -1,0 +1,53 @@
+---
+title: "Downloading Data"
+output:
+#  bookdown::pdf_document2:
+#    toc: TRUE
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+link-citations: yes
+fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Download & save files in directory
+
+You can download the files for your project from [QIITA](https://qiita.ucsd.edu/). 
+
+- Go to the Study Dropdown, and select “View Study”
+- Click on the study title you are interested in
+- Click on “Download All Data”, including metadata files. 
+
+Alternatively, these files can be found on the BioCompute CIFS share at Boise State University. 
+
+You will get three files from UCSD, including R1, R2, I1, and map files. You will rename the files as follows:
+- R1 -> forard.fastq.gz
+- R2 -> reverse.fastq.gz
+- I1 -> barcodes.fastq.gz
+
+With the mapping file, ensure that your first two columns are titled “sample_name” and “BarcodeSequence”.
+
+# Move all files to your cluster using secure copy (scp)
+
+You will move all files to the cluster using the command scp. Ensure that you are moving these to a scratch area, where there is enough space to hold large files:
+
+```markdown
+cd local_folder_containing_files
+scp * sgalla@borah-login.boisestate.edu:~/scratch/Pronghorn_16S/
+```
+
+# Move all files to your cluster using Globus
+
+Alternatively, at Boise State University you can use [Globus](https://www.globus.org/) to move files from the BioCompute CIFS share to your scratch folder. 
+
+- Sign into Globus with your Boise State University Credentials. 
+- In the left search bar, do a 'collection search' for Globus-VM (Boise State University). 
+- Navigate to the BioCompute CIFS Share and select the folder you want to move.
+- In the right search bar, do a 'collection search' for BORAH-DTN.
+- Navigate to the SCRATCH folder, find your scratch, and select the folder you want to move data towards. 
+- Press 'GO' 
+
