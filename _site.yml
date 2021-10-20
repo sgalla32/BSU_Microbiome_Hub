@@ -8,6 +8,6 @@ navbar:
     - text: "Getting Started"
       href: Getting_Started.html
     - text: "Unix/Linux Cheat Sheet "
-      href: Unix_Linux_Cheat_sheet.html
+      href: Unix_Linux_Cheat_Sheet.html
     - text: "Data Download"
       href: Data_Download.html
