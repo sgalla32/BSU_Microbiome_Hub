@@ -26,6 +26,28 @@ You can get a Borah account by contacting the [Boise State University HPC Team](
 
 Make sure that you let them know you need access to the BioCompute node, which is a node that is dedicated entirely to biology. This will ensure that your jobs get priority.
 
+# Using SBATCH files on Borah
+
+Many high performance computing (HPC) platforms use a queuing system to ensure computing jobs can get done by multiple users in an easy and equitable way. Jobs on Borah (Boise State University) and Teton (University of Wyoming) are submitted using SBATCH files, which are written in the 'slurm' coding language. 
+
+These files begin with a list of commands that give details about the job:
+
+```markdown
+#!/bin/bash
+#SBATCH -J MPI_TEST # job name
+#SBATCH -o log_slurm.o%j # output and error file name (%j expands to jobID)
+#SBATCH -n 28 # total number of tasks requested
+#SBATCH -N 1 # number of nodes you want to run on
+#SBATCH -p defq # queue (partition)
+#SBATCH -t 12:00:00 # run time (hh:mm:ss) - 12.0 hours in this example.
+#SBATCH --mail-type=END # mail you when your job is complete
+#SBATCH --mail-type=BEGIN # mail you when your job has begun
+#SBATCH --mail-type=FAIL # mail you when your job has failed
+#SBATCH --mail-user=user@domain.edu # email you can be sent notifications to.
+```
+
+This will be followed with any commands that are needed for your job. 
+
 # Access to the Biocompute CIFS-Share
 
 When you contact the HPC Team to create a Borah account, you can also ask them to add your credentials to the BSU Biocompute CIFS-Share. To access the CIFS-Share on a Mac, you can use the following:

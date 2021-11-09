@@ -11,3 +11,5 @@ navbar:
       href: Unix_Linux_Cheat_Sheet.html
     - text: "Data Download"
       href: Data_Download.html
+    - text: "QIIME2"
+      href: QIIME2.html

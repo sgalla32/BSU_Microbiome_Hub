@@ -39,9 +39,6 @@ knitr::write_bib(.packages(), file = 'packages.bib')
 knitr::include_graphics("Images/Microbiome_Hub.png")
 ```
 
-
-
-
 # Vision Statement
 
 The purpose of the Microbiome Hub at Boise State University is to develop resources to make microbiome pipelines, including community profiling via 16-S ([QIIME2](https://qiime2.org/)) and metagenomic shotgun sequencing ([Shogun](https://github.com/qiime2/q2-shogun)) readily accessible to researchers here and at our collaborating institutions. To achieve this, we will develop resources for researchers to upskill in using the high-performance computing environment (e.g., BORAH at Boise State University), complete microbiome pipelines, and analyze outputs. While these are being developed to primarily analyze datasets sequenced at UC San Diego (see list below), we anticipate that this pipeline can be readily transferred to ongoing projects at Boise State University (e.g., Bittleston Lab) and University of Wyoming (e.g., Beck Lab). 

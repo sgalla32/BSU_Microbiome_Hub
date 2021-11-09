@@ -1,0 +1,129 @@
+---
+title: "QIIME2"
+output:
+#  bookdown::pdf_document2:
+#    toc: TRUE
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+link-citations: yes
+fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+This tutorial will take you through the basics of using QIIME2 with data from UC San Diego. 
+
+# Import and Demultiplex Data
+
+We are going to create an sbatch file with commands for importing and demultiplexing data using QIIME2. 
+
+First, let's open a text editor like nano where you can edit your document: 
+
+```markdown
+nano QIIME2_Import_Demux.sbatch
+```
+
+You should now have an empty file called QIIME2_Import_Demux.sbatch. We are going to create an SBATCH file that uses QIIME2 for these steps:
+
+```markdown
+#SBATCH -J 16S_Import_Demux
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@domain.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+
+export TMPDIR=~/scratch
+
+# You can create a 'shortcut' to the folder you're going to be working out of:
+
+16S=~/scratch/16S
+
+# Input. To analyze these data, the sequences must first be imported into an artifact of type EMPPairedEndSequences. You want to ensure that your input-path is a folder that has your forward reads, reverse reads, and barcodes only.
+
+qiime tools import \
+  --type EMPPairedEndSequences \
+  --input-path ${16S}/Reads \
+  --output-path ${16S}/emp-paired-end-sequences.qza
+
+# Demux. In order to demultiplex your data, you will need an additional barcode file that came with your data. You will want a folder called 'demux_output' where your outputs can go. 
+
+mkdir ${16S}/demux_output
+
+qiime demux emp-paired \
+	--m-barcodes-file ${16S}/110599_mapping_fileRename.tsv \
+	--m-barcodes-column BarcodeSequence \
+	--p-rev-comp-barcodes \
+	--p-rev-comp-mapping-barcodes \
+	--i-seqs ${16S}/emp-paired-end-sequences.qza \
+	--o-per-sample-sequences ${16S}/demux_output/demux.qza \
+	--o-error-correction-details ${16S}/demux_output/demux-details.qza
+
+# Summarize. This will summarize our data with visualization files (*.qzv) in QIIME2:
+
+qiime demux summarize \
+  --i-data ${16S}/demux_output/demux.qza \
+  --o-visualization ${16S}/demux_output/per_sample_sequences.qzv
+
+```
+
+Once you have sorted your file paths that are specific to your configuration on the HPC, you can save this file by pressing control + x. Press 'y' to save your file. 
+
+Now you're ready to run your first SBATCH file on Borah. Let's use the following commands: 
+
+```markdown
+# Ensure that you call conda activate qiime2-2021.4 before you start. 
+conda aactivate qiime2-2021.4
+
+# Submit your job:
+sbatch QIIME2_Import_Demux.sbatch
+
+# Check in on your job:
+squeue
+
+# Cancel your job if necessary
+scancel <jobID>
+
+```
+
+If your job fails, take a look at your log file using the 'cat' function. The first error message should indicate what went wrong. 
+
+```markdown
+cat log.o<jobID>
+```
+
+If successful, this import should have created QIIME2 artifact files (.qza) and QIIME2 visualization files (.qzv).
+
+You will want to import the visualization files from the HPC to your local (personal) computer using the following commands:
+
+```markdown
+#In a terminal on your personal computer:
+mkdir ~/16S
+cd ~/16S
+
+scp login@borah-login.boisestate.edu:~/scratch/16S/demux_output/per_sample_sequences.qzv ./
+```
+
+Once per_sample_sequences.qsv is on your local computer, you can visualize it. To do this, go to https://view.qiime2.org/. Drag your file to this site to show the visualization. 
+
+This file is visualization of the frequency of sequence counts and also provides interactive plots for forward and reverse sequences which will be used to trim for DADA2 pipeline.
+
+Distribution plot:  This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).
+
+The quality scores at the ends of each direction impact the results of denoising.  The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.
+ 
+Forward (determining trim-left and trunc parameters)
+
+At position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 33. When zooming out to look at the plot as a whole, after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look at the right side of the graph and at position 151. At this position the standard deviation of the quality score distribution is much more varied and the lower whisker is at quality score 24 and the upper whisker is at 39. I therefore chose to trim the forward sequences from the left by 12 and set the trunc length at 150.
+
+Again, at position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 34. Again, when zooming out to look at the plot as a whole after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look the right side of the graph and at position 151, the quality score distribution is much more varied and the lower whisker is at quality score 15 and the upper whisker is at 39. I therefore chose to trim the reverse sequences from the left by 12 and set the trunc length at 150.
+
