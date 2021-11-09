@@ -328,6 +328,9 @@ div.tocify {
 <li>
   <a href="Data_Download.html">Data Download</a>
 </li>
+<li>
+  <a href="QIIME2.html">QIIME2</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         
@@ -357,8 +360,25 @@ div.tocify {
 </ul>
 <p>Make sure that you let them know you need access to the BioCompute node, which is a node that is dedicated entirely to biology. This will ensure that your jobs get priority.</p>
 </div>
+<div id="using-sbatch-files-on-borah" class="section level1">
+<h1><span class="header-section-number">2</span> Using SBATCH files on Borah</h1>
+<p>Many high performance computing (HPC) platforms use a queuing system to ensure computing jobs can get done by multiple users in an easy and equitable way. Jobs on Borah (Boise State University) and Teton (University of Wyoming) are submitted using SBATCH files, which are written in the ‘slurm’ coding language.</p>
+<p>These files begin with a list of commands that give details about the job:</p>
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J MPI_TEST # job name
+#SBATCH -o log_slurm.o%j # output and error file name (%j expands to jobID)
+#SBATCH -n 28 # total number of tasks requested
+#SBATCH -N 1 # number of nodes you want to run on
+#SBATCH -p defq # queue (partition)
+#SBATCH -t 12:00:00 # run time (hh:mm:ss) - 12.0 hours in this example.
+#SBATCH --mail-type=END # mail you when your job is complete
+#SBATCH --mail-type=BEGIN # mail you when your job has begun
+#SBATCH --mail-type=FAIL # mail you when your job has failed
+#SBATCH --mail-user=user@domain.edu # email you can be sent notifications to.</code></pre>
+<p>This will be followed with any commands that are needed for your job.</p>
+</div>
 <div id="access-to-the-biocompute-cifs-share" class="section level1">
-<h1><span class="header-section-number">2</span> Access to the Biocompute CIFS-Share</h1>
+<h1><span class="header-section-number">3</span> Access to the Biocompute CIFS-Share</h1>
 <p>When you contact the HPC Team to create a Borah account, you can also ask them to add your credentials to the BSU Biocompute CIFS-Share. To access the CIFS-Share on a Mac, you can use the following:</p>
 <ul>
 <li>Click Finder</li>
@@ -368,7 +388,7 @@ div.tocify {
 </ul>
 </div>
 <div id="how-do-download-anaconda-and-qiime2-to-your-borah-account" class="section level1">
-<h1><span class="header-section-number">3</span> How do download Anaconda and QIIME2 to your Borah account:</h1>
+<h1><span class="header-section-number">4</span> How do download Anaconda and QIIME2 to your Borah account:</h1>
 <p>Anaconda is a program that helps with the installation of hundreds of genetic software for Linux.</p>
 <p>First, we need to ssh (secure shell) to get onto Borah:</p>
 <pre class="markdown"><code>ssh -XC username@borah-login.boisestate.edu
@@ -391,7 +411,7 @@ conda activate qiime2-2021.4
 conda deactivate </code></pre>
 </div>
 <div id="qiita" class="section level1">
-<h1><span class="header-section-number">4</span> QIITA</h1>
+<h1><span class="header-section-number">5</span> QIITA</h1>
 <p>Many of the data sets we are working with are found on University of California San Diego’s site <a href="#qiita">QIITA</a> (<a href="https://qiita.ucsd.edu/" class="uri">https://qiita.ucsd.edu/</a>). You can create an account here. Email Stephanie Galla <a href="stephaniegalla@boisestate.edu">stephaniegalla@boisestate.edu</a> to ask her to add you to projects.</p>
 </div>
 
