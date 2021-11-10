@@ -20,6 +20,8 @@ This tutorial will take you through the basics of using QIIME2 with data from UC
 
 We are going to create an sbatch file with commands for importing and demultiplexing data using QIIME2. 
 
+## Create an SBATCH File.
+
 First, let's open a text editor like nano where you can edit your document: 
 
 ```markdown
@@ -78,6 +80,8 @@ qiime demux summarize \
 
 Once you have sorted your file paths that are specific to your configuration on the HPC, you can save this file by pressing control + x. Press 'y' to save your file. 
 
+## Run the SBATCH file on your HPC.
+
 Now you're ready to run your first SBATCH file on Borah. Let's use the following commands: 
 
 ```markdown
@@ -103,6 +107,8 @@ cat log.o<jobID>
 
 If successful, this import should have created QIIME2 artifact files (.qza) and QIIME2 visualization files (.qzv).
 
+## Visualize the data.
+
 You will want to import the visualization files from the HPC to your local (personal) computer using the following commands:
 
 ```markdown
@@ -115,11 +121,28 @@ scp login@borah-login.boisestate.edu:~/scratch/16S/demux_output/per_sample_seque
 
 Once per_sample_sequences.qsv is on your local computer, you can visualize it. To do this, go to https://view.qiime2.org/. Drag your file to this site to show the visualization. 
 
-This file is visualization of the frequency of sequence counts and also provides interactive plots for forward and reverse sequences which will be used to trim for DADA2 pipeline.
+The first page you will see will give an overview of descriptive statistics for your sequencing data, including read counts. 
 
-Distribution plot:  This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).
 
-The quality scores at the ends of each direction impact the results of denoising.  The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.
+```{r DescStats, echo=FALSE, fig.cap="Read count descriptive statistics from pronghorn data set.", fig.align = 'center', out.width = '100%'}
+knitr::include_graphics("Images/Descriptive_Stats.png")
+```
+
+These will also be provided in a histogram to show the distribution of read counts. 
+
+```{r histo, echo=FALSE, fig.cap="Read count histogram from pronghorn data set.", fig.align = 'center', out.width = '100%'}
+knitr::include_graphics("Images/Read_Count_Histogram.png")
+```
+
+If you navigate to the 'Interactive Quality Plot' tab, you will find quality scores for all of our sequence reads, which will be used to trim for DADA2 pipeline. This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).
+
+
+```{r qual, echo=FALSE, fig.cap="Interactive quality plot from pronghorn data set.", fig.align = 'center', out.width = '100%'}
+knitr::include_graphics("Images/Interactive_Quality_Score.png")
+```
+
+
+The quality scores at the ends of each direction impact the results of DADA2 denoising. The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.
  
 Forward (determining trim-left and trunc parameters)
 

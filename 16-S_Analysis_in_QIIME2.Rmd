@@ -95,7 +95,7 @@ I use scp to import per_sample_sequences.qzv to my local computer using the foll
 #If you’re still on Borah, use the following command:
 exit
 
-#Make a local directory
+#Make a local directory on your home computer.
 mkdir ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
 cd ./Documents/Microbiome_Hub/Sage_Grouse_16S_Outputs
 
@@ -104,6 +104,8 @@ scp userlogin@borah-login.boisestate.edu:~/scratch/Path_To_File/per_sample_seque
 ```
 
 On your local computer, go to https://view.qiime2.org/, drag per_sample_sequences.qzv to the portal, and view some outputs:
+
+
 
 Discussion:
  
