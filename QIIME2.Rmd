@@ -86,7 +86,7 @@ Now you're ready to run your first SBATCH file on Borah. Let's use the following
 
 ```markdown
 # Ensure that you call conda activate qiime2-2021.4 before you start. 
-conda aactivate qiime2-2021.4
+conda activate qiime2-2021.4
 
 # Submit your job:
 sbatch QIIME2_Import_Demux.sbatch
