@@ -1,0 +1,39 @@
+---
+title: "Glossary"
+output:
+#  bookdown::pdf_document2:
+#    toc: TRUE
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+link-citations: yes
+fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+**16S Sequencing:** Sequencing the 16S subunit gene of ribosomal RNA (rRNA), which is useful for microbial identification. 
+
+**18S Sequencing:** Sequencing the 18S subunit of ribosomal RNA (rRNA), which is useful for eukaryotic identification. The 18S subunit is a part of the small subunit of ribosomal DNA in eukaryotic cells (40S). 
+
+**Alpha Diversity:**
+
+**Artifact:**
+
+**Beta Diversity:**
+
+**Feature:**
+
+**Metagenomics:** Sequences the entire genomes of all individuals in a bacterial sample. This is beneficial for understanding which bacteria are in a sample, and which genes are found in each species. Sometimes also referred to as ‘shotgun’ sequencing by the lab. 
+
+**Shannon Diversity Index:** Also known as a Shannon-Wiener index, or Shannon entropy. A diversity index that takes account species richness, evenness, and abundance. This index is more strongly influenced by species richness and rare species. The higher the value, the higher the diversity. 
+
+**Simpson’s Diversity Index:** A diversity index that takes account species richness, evenness, and abundance. This index gives more weight to evenness and common species. It has also been likened to a ‘similar index’, where the higher the value, the lower the diversity. This might be better for picking up dominant species, than rare species. 
+
+**Species Richness (S):** A diversity index reflecting number of different species represented in an environment. Species richness does not take into account abundance or distribution. 
+
+**Species Evenness (E):** A diversity index reflecting the relative abundance amongst different species represented in an environment. For example, if you have three species but one is incredibly endangered, it will have low evenness. Pielou’s evenness index can be used here. 
+
+**Species Dominance:** A diversity index that reflects over-represented species in an environment, given abundance or biomass. 

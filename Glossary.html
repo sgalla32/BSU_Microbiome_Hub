@@ -11,7 +11,7 @@
 
 
 
-<title>Getting Started</title>
+<title>Glossary</title>
 
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -346,77 +346,23 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Getting Started</h1>
+<h1 class="title toc-ignore">Glossary</h1>
 
 </div>
 
 
-<div id="borah" class="section level1">
-<h1><span class="header-section-number">1</span> Borah</h1>
-<p>You can get a Borah account by contacting the <a href="researchcomputing@boisestate.edu">Boise State University HPC Team</a>. When asking for a Borah account, you will need to provide the following information:</p>
-<ul>
-<li>Request Account on the HPC SYSTEM: system name</li>
-<li>Project: Project Name or Grant Information</li>
-<li>Description of Research: Short description of research to be done on the cluster.</li>
-<li>Project PI Name: PI’s-Name.</li>
-<li>Email Address of Requestor: <a href="mailto:user@boisestate.edu" class="email">user@boisestate.edu</a></li>
-</ul>
-<p>Make sure that you let them know you need access to the BioCompute node, which is a node that is dedicated entirely to biology. This will ensure that your jobs get priority.</p>
-</div>
-<div id="using-sbatch-files-on-borah" class="section level1">
-<h1><span class="header-section-number">2</span> Using SBATCH files on Borah</h1>
-<p>Many high performance computing (HPC) platforms use a queuing system to ensure computing jobs can get done by multiple users in an easy and equitable way. Jobs on Borah (Boise State University) and Teton (University of Wyoming) are submitted using SBATCH files, which are written in the ‘slurm’ coding language.</p>
-<p>These files begin with a list of commands that give details about the job:</p>
-<pre class="markdown"><code>#!/bin/bash
-#SBATCH -J MPI_TEST # job name
-#SBATCH -o log_slurm.o%j # output and error file name (%j expands to jobID)
-#SBATCH -n 28 # total number of tasks requested
-#SBATCH -N 1 # number of nodes you want to run on
-#SBATCH -p defq # queue (partition)
-#SBATCH -t 12:00:00 # run time (hh:mm:ss) - 12.0 hours in this example.
-#SBATCH --mail-type=END # mail you when your job is complete
-#SBATCH --mail-type=BEGIN # mail you when your job has begun
-#SBATCH --mail-type=FAIL # mail you when your job has failed
-#SBATCH --mail-user=user@domain.edu # email you can be sent notifications to.</code></pre>
-<p>This will be followed with any commands that are needed for your job.</p>
-</div>
-<div id="access-to-the-biocompute-cifs-share" class="section level1">
-<h1><span class="header-section-number">3</span> Access to the Biocompute CIFS-Share</h1>
-<p>When you contact the HPC Team to create a Borah account, you can also ask them to add your credentials to the BSU Biocompute CIFS-Share. To access the CIFS-Share on a Mac, you can use the following:</p>
-<ul>
-<li>Click Finder</li>
-<li>Click on ‘Go’ -&gt; ‘Connect to server…’</li>
-<li>Type ‘<a href="smb://cifs-prd-01/Research/BioCompute/" class="uri">smb://cifs-prd-01/Research/BioCompute/</a>’ into the dropdown.</li>
-<li>Click ‘Connect’</li>
-</ul>
-</div>
-<div id="how-do-download-anaconda-and-qiime2-to-your-borah-account" class="section level1">
-<h1><span class="header-section-number">4</span> How do download Anaconda and QIIME2 to your Borah account:</h1>
-<p>Anaconda is a program that helps with the installation of hundreds of genetic software for Linux.</p>
-<p>First, we need to ssh (secure shell) to get onto Borah:</p>
-<pre class="markdown"><code>ssh -XC username@borah-login.boisestate.edu
-# Enter your password, then you&#39;re on Borah.</code></pre>
-<p>Now, we will download the script that installs the most current version of Anaconda. We will download this using wget:</p>
-<pre class="markdown"><code>wget -O - https://www.anaconda.com/distribution/ 2&gt;/dev/null | sed -ne &#39;s@.*\(https:\/\/repo\.anaconda\.com\/archive\/Anaconda3-.*-Linux-x86_64\.sh\)\&quot;&gt;64-Bit (x86) Installer.*@\1@p&#39; | xargs wget</code></pre>
-<p>Now, we will execute this bash script using bash:</p>
-<pre class="markdown"><code>bash Anaconda3-2021.05-Linux-x86_64.sh</code></pre>
-<p>Now, we will Install QIIME2 using conda. We will download a *.yml file using wget to do this:</p>
-<pre class="markdown"><code>wget https://data.qiime2.org/distro/core/qiime2-2021.4-py38-linux-conda.yml
-
-# Use conda to create an environment:
-conda env create -n qiime2-2021.4 --file qiime2-2021.4-py38-linux-conda.yml
-
-# Optional cleanup
-rm qiime2-2021.4-py38-linux-conda.yml
-
-# Test to see if it works, using conda activate:
-conda activate qiime2-2021.4
-conda deactivate </code></pre>
-</div>
-<div id="qiita" class="section level1">
-<h1><span class="header-section-number">5</span> QIITA</h1>
-<p>Many of the data sets we are working with are found on University of California San Diego’s site <a href="#qiita">QIITA</a> (<a href="https://qiita.ucsd.edu/" class="uri">https://qiita.ucsd.edu/</a>). You can create an account here. Email Stephanie Galla <a href="stephaniegalla@boisestate.edu">stephaniegalla@boisestate.edu</a> to ask her to add you to projects.</p>
-</div>
+<p><strong>16S Sequencing:</strong> Sequencing the 16S subunit gene of ribosomal RNA (rRNA), which is useful for microbial identification.</p>
+<p><strong>18S Sequencing:</strong> Sequencing the 18S subunit of ribosomal RNA (rRNA), which is useful for eukaryotic identification. The 18S subunit is a part of the small subunit of ribosomal DNA in eukaryotic cells (40S).</p>
+<p><strong>Alpha Diversity:</strong></p>
+<p><strong>Artifact:</strong></p>
+<p><strong>Beta Diversity:</strong></p>
+<p><strong>Feature:</strong></p>
+<p><strong>Metagenomics:</strong> Sequences the entire genomes of all individuals in a bacterial sample. This is beneficial for understanding which bacteria are in a sample, and which genes are found in each species. Sometimes also referred to as ‘shotgun’ sequencing by the lab.</p>
+<p><strong>Shannon Diversity Index:</strong> Also known as a Shannon-Wiener index, or Shannon entropy. A diversity index that takes account species richness, evenness, and abundance. This index is more strongly influenced by species richness and rare species. The higher the value, the higher the diversity.</p>
+<p><strong>Simpson’s Diversity Index:</strong> A diversity index that takes account species richness, evenness, and abundance. This index gives more weight to evenness and common species. It has also been likened to a ‘similar index’, where the higher the value, the lower the diversity. This might be better for picking up dominant species, than rare species.</p>
+<p><strong>Species Richness (S):</strong> A diversity index reflecting number of different species represented in an environment. Species richness does not take into account abundance or distribution.</p>
+<p><strong>Species Evenness (E):</strong> A diversity index reflecting the relative abundance amongst different species represented in an environment. For example, if you have three species but one is incredibly endangered, it will have low evenness. Pielou’s evenness index can be used here.</p>
+<p><strong>Species Dominance:</strong> A diversity index that reflects over-represented species in an environment, given abundance or biomass.</p>
 
 
 
