@@ -446,17 +446,14 @@ Figure 1.1: Read count descriptive statistics from pronghorn data set.
 Figure 1.2: Read count histogram from pronghorn data set.
 </p>
 </div>
-<p>If you navigate to the ‘Interactive Quality Plot’ tab, you will find quality scores for all of our sequence reads, which will be used to trim for DADA2 pipeline. This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted. Because this is a subsample not all the box plots are made up of the same number of reads, so this needs to be kept in mind when comparing the distributions of two box plots (nt positions).</p>
+<p>If you navigate to the ‘Interactive Quality Plot’ tab, you will find quality scores for all of our sequence reads, which will be used to trim for DADA2 pipeline. This plot is created from a subsample of 10,000 reads. This number is the default parameter for the demux plugin, but can be adjusted.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:qual"></span>
 <img src="Images/Interactive_Quality_Score.png" alt="Interactive quality plot from pronghorn data set." width="100%" />
 <p class="caption">
 Figure 1.3: Interactive quality plot from pronghorn data set.
 </p>
 </div>
-<p>The quality scores at the ends of each direction impact the results of DADA2 denoising. The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. These trim parameters also determine overlap regions. Wherever a pair fails to join because of insufficient overlap, is discarded. The DADA2 creator recommends, minimum 20nts for merging. Factoring in biological length variation with amplicon size, 30nts is recommended. As long as you have the minimum amount of overlap, it is recommended to truncate off sequence tails after the quality has crashed. In order to assess this, I zoom in on the left and right sides of the plots to set trim left and truncation length parameters.</p>
-<p>Forward (determining trim-left and trunc parameters)</p>
-<p>At position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 33. When zooming out to look at the plot as a whole, after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look at the right side of the graph and at position 151. At this position the standard deviation of the quality score distribution is much more varied and the lower whisker is at quality score 24 and the upper whisker is at 39. I therefore chose to trim the forward sequences from the left by 12 and set the trunc length at 150.</p>
-<p>Again, at position 12 the distribution of quality scores is not as varied and the lower whisker is at quality score 34. Again, when zooming out to look at the plot as a whole after position 12 the quality score distributions for each position level out and standard deviation remains within an acceptable range until you look the right side of the graph and at position 151, the quality score distribution is much more varied and the lower whisker is at quality score 15 and the upper whisker is at 39. I therefore chose to trim the reverse sequences from the left by 12 and set the trunc length at 150.</p>
+<p>The quality scores at the ends of each direction tell us how we should trim the data during the DADA2 denoising step. The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. Overall, the quality scores of this data set are pretty high (&gt;30). We can see that quality score improves in both directions after 12bp (the length of the barcode adapters from UCSD). We also see quality drop a bit at 151bp (the length of the reads from a MiSeq). We therefore will truncate our data accordingly in the next step.</p>
 </div>
 </div>
 
