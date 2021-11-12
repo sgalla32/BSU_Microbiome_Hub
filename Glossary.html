@@ -353,16 +353,25 @@ div.tocify {
 
 <p><strong>16S Sequencing:</strong> Sequencing the 16S subunit gene of ribosomal RNA (rRNA), which is useful for microbial identification.</p>
 <p><strong>18S Sequencing:</strong> Sequencing the 18S subunit of ribosomal RNA (rRNA), which is useful for eukaryotic identification. The 18S subunit is a part of the small subunit of ribosomal DNA in eukaryotic cells (40S).</p>
-<p><strong>Alpha Diversity:</strong></p>
-<p><strong>Artifact:</strong></p>
-<p><strong>Beta Diversity:</strong></p>
-<p><strong>Feature:</strong></p>
+<p><strong>Alpha Diversity:</strong> A metric that characterizes community structure as a form of richness (number of species) and evenness (relative abundance). In terms of microbial communities, this is often the community defined in a single sample.</p>
+<p><strong>Artifact (QIIME2):</strong> An artifact is a standard file format for use in QIIME2, often denoted as a *.qza file (q=qiime, z=zipped, a=artifact) .</p>
+<p><strong>Amplicon Sequence Variant (ASV):</strong> A unique sequence read, that is the result of a pipeline that corrects for quality and errors (i.e., denoises), which can be used as a proxy for a unique species.</p>
+<p><strong>Beta Diversity:</strong> A metric that measures the similarity or dissimilarity of microbial abundance between two samples.</p>
+<p><strong>Bray-Curtis Dissimilarity:</strong> A beta diversity metric that measures the differences in microbial species abundance between two samples, with values ranging from 0 (both samples have the same microbs and abundance) to 1 (both samples are completely dissimilar).</p>
+<p><strong>Feature (QIIME2):</strong> A broad term, referring to a unit of observation using QIIME. When using QIIME2, this almost always is in regards to an amplicon sequence variant (ASV).</p>
+<p><strong>Jaccard Distance:</strong> A beta diversity metric that is based on the presence or absence of species (does not include abundance). This measures the difference in microbial composition between two samples on a scale from 0 (both samples share the same species) to 1 (samples have completely different species).</p>
 <p><strong>Metagenomics:</strong> Sequences the entire genomes of all individuals in a bacterial sample. This is beneficial for understanding which bacteria are in a sample, and which genes are found in each species. Sometimes also referred to as ‘shotgun’ sequencing by the lab.</p>
-<p><strong>Shannon Diversity Index:</strong> Also known as a Shannon-Wiener index, or Shannon entropy. A diversity index that takes account species richness, evenness, and abundance. This index is more strongly influenced by species richness and rare species. The higher the value, the higher the diversity.</p>
+<p><strong>Operational Taxonomic Unit (OTU):</strong> A taxonomic unit, derived from sequence clustering approaches. Traditionally, this has included data without denoising.</p>
+<p><strong>Rarefaction:</strong> An approach that adjusts for differences in read counts by subsampling reads in all individuals to a set number. For example, if rarefaction is set to 5000, all samples with reads &gt;5000 will be randomly subsampled, with excess reads discarded. All individuals with &lt;5000 reads will not be included in analyses. In doing so, this helps correct for biases in downstream alpha diversity estimates (Willis 2019).</p>
+<p><strong>Shannon Diversity Index:</strong> Also known as a Shannon-Wiener index, or Shannon entropy. An alpha diversity index that takes account species richness, evenness, and abundance. This index is more strongly influenced by species richness and rare species. The higher the value, the higher the diversity.</p>
+<p><strong>Shannon Evenness Index (Shannon’s equitability index):</strong> An alpha diversity index, independent of species richness. It measures how evenly the microbes are distributed in a sample without considering the number of species. Values can range from zero to one: from high dominance of a single species to perfectly equal abundances across all species.</p>
 <p><strong>Simpson’s Diversity Index:</strong> A diversity index that takes account species richness, evenness, and abundance. This index gives more weight to evenness and common species. It has also been likened to a ‘similar index’, where the higher the value, the lower the diversity. This might be better for picking up dominant species, than rare species.</p>
-<p><strong>Species Richness (S):</strong> A diversity index reflecting number of different species represented in an environment. Species richness does not take into account abundance or distribution.</p>
 <p><strong>Species Evenness (E):</strong> A diversity index reflecting the relative abundance amongst different species represented in an environment. For example, if you have three species but one is incredibly endangered, it will have low evenness. Pielou’s evenness index can be used here.</p>
 <p><strong>Species Dominance:</strong> A diversity index that reflects over-represented species in an environment, given abundance or biomass.</p>
+<p><strong>Species Richness (S):</strong> A diversity index reflecting number of different species represented in an environment. Species richness does not take into account abundance or distribution.</p>
+<p><strong>UniFrac:</strong> A beta diversity metric that uses the phylogenetic tree to show the branch length that is shared between samples. An unweighted UniFrac is purely based on sequence distances (no abundance information), while a weighted Unirac is where branch lengths are weighted by relative abundance.</p>
+<p>References:</p>
+<p>Willis AD (2019) Rarefaction, alpha diversity, and statistics. Frontiers in Microbiology. <a href="https://doi.org/10.3389/fmicb.2019.02407">https://doi.org/10.3389/fmicb.2019.02407</a>.</p>
 
 
 
