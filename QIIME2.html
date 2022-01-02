@@ -13,6 +13,7 @@
 
 <title>QIIME2</title>
 
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -352,10 +353,10 @@ div.tocify {
 
 
 <p>This tutorial will take you through the basics of using QIIME2 with data from UC San Diego.</p>
-<div id="import-and-demultiplex-data" class="section level1">
+<div id="import-and-demultiplex-data" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Import and Demultiplex Data</h1>
 <p>We are going to create an sbatch file with commands for importing and demultiplexing data using QIIME2.</p>
-<div id="create-an-sbatch-file." class="section level2">
+<div id="create-an-sbatch-file." class="section level2" number="1.1">
 <h2><span class="header-section-number">1.1</span> Create an SBATCH File.</h2>
 <p>First, let’s open a text editor like nano where you can edit your document:</p>
 <pre class="markdown"><code>nano QIIME2_Import_Demux.sbatch</code></pre>
@@ -407,7 +408,7 @@ qiime demux summarize \
 </code></pre>
 <p>Once you have sorted your file paths that are specific to your configuration on the HPC, you can save this file by pressing control + x. Press ‘y’ to save your file.</p>
 </div>
-<div id="run-the-sbatch-file-on-your-hpc." class="section level2">
+<div id="run-the-sbatch-file-on-your-hpc." class="section level2" number="1.2">
 <h2><span class="header-section-number">1.2</span> Run the SBATCH file on your HPC.</h2>
 <p>Now you’re ready to run your first SBATCH file on Borah. Let’s use the following commands:</p>
 <pre class="markdown"><code># Ensure that you call conda activate qiime2-2021.4 before you start. 
@@ -426,7 +427,7 @@ scancel &lt;jobID&gt;
 <pre class="markdown"><code>cat log.o&lt;jobID&gt;</code></pre>
 <p>If successful, this import should have created QIIME2 artifact files (.qza) and QIIME2 visualization files (.qzv).</p>
 </div>
-<div id="visualize-the-data." class="section level2">
+<div id="visualize-the-data." class="section level2" number="1.3">
 <h2><span class="header-section-number">1.3</span> Visualize the data.</h2>
 <p>You will want to import the visualization files from the HPC to your local (personal) computer using the following commands:</p>
 <pre class="markdown"><code>#In a terminal on your personal computer:
