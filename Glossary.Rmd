@@ -52,8 +52,6 @@ editor_options:
 
 **UniFrac:** A beta diversity metric that uses the phylogenetic tree to show the branch length that is shared between samples. An unweighted UniFrac is purely based on sequence distances (no abundance information), while a weighted Unirac is where branch lengths are weighted by relative abundance.
 
-
-
 References:
 
 Willis AD (2019) Rarefaction, alpha diversity, and statistics. Frontiers in Microbiology. [https://doi.org/10.3389/fmicb.2019.02407](https://doi.org/10.3389/fmicb.2019.02407).
