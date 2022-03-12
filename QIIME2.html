@@ -361,7 +361,8 @@ div.tocify {
 <p>First, let’s open a text editor like nano where you can edit your document:</p>
 <pre class="markdown"><code>nano QIIME2_Import_Demux.sbatch</code></pre>
 <p>You should now have an empty file called QIIME2_Import_Demux.sbatch. We are going to create an SBATCH file that uses QIIME2 for these steps:</p>
-<pre class="markdown"><code>#SBATCH -J 16S_Import_Demux
+<pre class="markdown"><code>#!/bin/bash
+#SBATCH -J 16S_Import_Demux
 #SBATCH -o log.o%j 
 #SBATCH -p bsudfq
 #SBATCH -N 1
@@ -459,6 +460,167 @@ Figure 1.3: Interactive quality plot from pronghorn data set.
 </div>
 <p>The quality scores at the ends of each direction tell us how we should trim the data during the DADA2 denoising step. The noisier the data, the more likely it is that low abundance variation is mistaken for error and reads fail to merge. Overall, the quality scores of this data set are pretty high (&gt;30). We can see that quality score improves in both directions after 12bp (the length of the barcode adapters from UCSD). We also see quality drop a bit at 151bp (the length of the reads from a MiSeq). We therefore will truncate our data accordingly in the next step.</p>
 </div>
+</div>
+<div id="dada2" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> DADA2</h1>
+<p>This method denoises paired-end sequences, dereplicates them, and filters chimeras (i.e., artifacts from the PCR process from 2+ biological sequences incorrectly joined together). In the dereplication process all the quality-filtered sequences are collapsed into a set of unique reads, making downstream computation easier.</p>
+<div id="sbatch-for-running-dada2" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> SBatch for Running DADA2</h2>
+<p>Let’s open a text editor like nano where you can edit your document:</p>
+<pre class="markdown"><code>nano QIIME2_DADA2.sbatch</code></pre>
+<p>You should now have an empty file called QIIME2_DADA2.sbatch. We are going to create an SBATCH file that uses QIIME2 for these steps:</p>
+<pre class="markdown"><code>#SBATCH -J 16S_DADA2
+#SBATCH -o log.o%j 
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=user@domain.edu
+
+# Ensure the temporary directory is in your scratch, so that big files don&#39;t take up too much space.
+
+export TMPDIR=~/scratch
+
+# You can create a &#39;shortcut&#39; to the folder you&#39;re going to be working out of:
+
+16S=~/scratch/16S
+
+# We are now going to denoise the data, cutting off the first 12 base pairs. 
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs ${16S}/demux_output/demux.qza \
+  --p-trim-left-f 12 \
+  --p-trim-left-r 12 \
+  --p-trunc-len-f 150 \
+  --p-trunc-len-r 150 \
+  --p-n-threads 10 \
+  --o-representative-sequences ${16S}/demux_output/rep-seqs-dada2.qza \
+  --o-table ${16S}/demux_output/table-dada2.qza \
+  --o-denoising-stats ${16S}/demux_output/stats-dada2.qza
+
+# Feature table
+# Here, make sure to use your metadata file, as opposed to your barcode file. 
+qiime feature-table summarize   \
+  --i-table ${16S}/demux_output/table-dada2.qza \
+  --o-visualization ${116S}/demux_output/table-dada2.qzv \
+  --m-sample-metadata-file ${16S}/12581_20210414-100355.tsv
+
+# Representative sequences
+qiime feature-table tabulate-seqs \
+  --i-data ${16S}/demux_output/rep-seqs-dada2.qza \
+  --o-visualization ${16S}/demux_output/rep-seqs-dada2.qzv
+
+# Denoising Stats
+qiime metadata tabulate \
+  --m-input-file ${16S}/demux_output/stats-dada2.qza \
+  --o-visualization ${16S}/demux_output/stats-dada2.qzv
+
+## Export ASV table
+
+qiime tools export \
+  --input-path ${16S}/demux_output/table-dada2.qza \
+  --output-path ${16S}/exported-files
+
+biom convert -i ${16S}/exported-files/feature-table.biom \
+-o $16S}/exported-files/asv-table-dada2.txt \
+--to-tsv </code></pre>
+<p>Once you have sorted your file paths that are specific to your configuration on the HPC, you can save this file by pressing control + x. Press ‘y’ to save your file.</p>
+</div>
+<div id="run-the-sbatch-file-on-your-hpc.-1" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Run the SBATCH file on your HPC.</h2>
+<p>Now you’re ready to run your second SBATCH file on Borah. Let’s use the following commands:</p>
+<pre class="markdown"><code># Ensure that you call conda activate qiime2-2021.4 before you start. 
+conda activate qiime2-2021.4
+
+# Submit your job:
+sbatch QIIME2_DADA2.sbatch
+
+# Check in on your job:
+squeue
+
+# Cancel your job if necessary
+scancel &lt;jobID&gt;
+</code></pre>
+<p>If your job fails, take a look at your log file using the ‘cat’ function. The first error message should indicate what went wrong.</p>
+<pre class="markdown"><code>cat log.o&lt;jobID&gt;</code></pre>
+<p>If successful, this import should have created QIIME2 artifact files (.qza) and QIIME2 visualization files (.qzv).</p>
+</div>
+<div id="visualize-the-data.-1" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Visualize the data.</h2>
+<p>You will want to import the visualization files from the HPC to your local (personal) computer using the following commands:</p>
+<pre class="markdown"><code>#In a terminal on your personal computer:
+mkdir ~/16S
+cd ~/16S
+
+scp login@borah-login.boisestate.edu:~/scratch/16S/demux_output/per_sample_sequences.qzv ./</code></pre>
+<p>Once per_sample_sequences.qsv is on your local computer, you can visualize it. To do this, go to <a href="https://view.qiime2.org/" class="uri">https://view.qiime2.org/</a>. Drag your file to this site to show the visualization.</p>
+</div>
+</div>
+<div id="taxonomy" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Taxonomy</h1>
+<p>In order to assign taxonomy, we use pre-existing SILVA classifiers from the QIIME2 website: <a href="https://docs.qiime2.org/2021.2/data-resources/" class="uri">https://docs.qiime2.org/2021.2/data-resources/</a></p>
+<p>This includes:
+Silva 138 SSURef NR99 515F/806R region sequences
+Silva 138 SSURef NR99 515F/806R region taxonomy
+Silva 128 SEPP reference database</p>
+<p>These can be downloaded directly to the cluster using the following commands. Make sure that you’re in the correct database.</p>
+<pre class="markdown"><code>cd ~/scratch/16S/
+wget https://data.qiime2.org/2021.2/common/silva-138-99-seqs-515-806.qza
+wget https://data.qiime2.org/2021.2/common/silva-138-99-tax-515-806.qza
+wget https://data.qiime2.org/2021.2/common/sepp-refs-silva-128.qza</code></pre>
+<div id="sbatch-for-taxonomy" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> SBatch for Taxonomy</h2>
+<p>Let’s open a text editor like nano where you can edit your document:</p>
+<pre class="markdown"><code>nano QIIME2_DADA2.sbatch</code></pre>
+<p>You should now have an empty file called QIIME2_DADA2.sbatch. We are going to create an SBATCH file that uses QIIME2 for these steps:</p>
+<p>```markdown
+#SBATCH -J 16S_Taxonomy
+#SBATCH -o log.o%j
+#SBATCH -p bsudfq
+#SBATCH -N 1
+#SBATCH -n 14
+#SBATCH -t 1-00:00:00
+#SBATCH –mail-type=END
+#SBATCH –mail-type=BEGIN
+#SBATCH –mail-type=FAIL
+#SBATCH –<a href="mailto:mail-user=user@domain.edu" class="email">mail-user=user@domain.edu</a></p>
+</div>
+</div>
+<div id="ensure-the-temporary-directory-is-in-your-scratch-so-that-big-files-dont-take-up-too-much-space." class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Ensure the temporary directory is in your scratch, so that big files don’t take up too much space.</h1>
+<p>export TMPDIR=~/scratch</p>
+</div>
+<div id="you-can-create-a-shortcut-to-the-folder-youre-going-to-be-working-out-of" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> You can create a ‘shortcut’ to the folder you’re going to be working out of:</h1>
+<p>16S=~/scratch/16S</p>
+</div>
+<div id="taxonomy-train-the-classifier" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Taxonomy: Train the classifier</h1>
+<p>qiime feature-classifier fit-classifier-naive-bayes<br />
+–i-reference-reads ${Sage_Grouse_16S}/silva-138-99-seqs-515-806.qza<br />
+–i-reference-taxonomy ${Sage_Grouse_16S}/silva-138-99-tax-515-806.qza<br />
+–o-classifier ${Sage_Grouse_16S}/classifier.qza</p>
+<p>#Phylogenetic Tree
+qiime fragment-insertion sepp<br />
+–i-representative-sequences ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza<br />
+–i-reference-database ${Sage_Grouse_16S}/sepp-refs-silva-128.qza<br />
+–p-threads 4<br />
+–o-tree ${Sage_Grouse_16S}/sepp-tree.qza<br />
+–o-placements ${Sage_Grouse_16S}/sepp-placements.qza</p>
+<p>qiime feature-classifier classify-sklearn<br />
+–i-reads ${Sage_Grouse_16S}/demux_output/rep-seqs-dada2.qza<br />
+–i-classifier ${Sage_Grouse_16S}/classifier.qza<br />
+–o-classification ${Sage_Grouse_16S}/taxonomy.qza</p>
+<p>qiime metadata tabulate<br />
+–m-input-file ${Sage_Grouse_16S}/taxonomy.qza<br />
+–o-visualization ${Sage_Grouse_16S}/taxonomy.qzv</p>
+<p>qiime taxa barplot<br />
+–i-table ${Sage_Grouse_16S}/demux_output/table-dada2.qza<br />
+–i-taxonomy ${Sage_Grouse_16S}/taxonomy.qza<br />
+–m-metadata-file ${Sage_Grouse_16S}/12842_20210216-155838.tsv<br />
+–o-visualization ${Sage_Grouse_16S}/taxa-bar-plots.qzv</p>
 </div>
 
 
