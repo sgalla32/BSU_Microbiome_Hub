@@ -61,4 +61,4 @@ Goals for this project, a list of ongoing projects, and timelines are captured i
 
 # Data Storage
 
-All datasets from UC San Diego are currently being stored on [QIITA](https://qiita.ucsd.edu/), with backups of the raw data available on the BioCompute CIFS share at Boise State University. We anticipate that QIIME2 visualizations (*.qza) files and sbatch scripts will be made available in the Microbiome Hub folder on GoogleDrive prior to publication. All data will become publicly available via NCBI when published. Scripts for analyses will be available on GitHub. 
+All datasets from UC San Diego are currently being stored on [QIITA](https://qiita.ucsd.edu/), with backups of the raw data available on the BioCompute CIFS share at Boise State University. We anticipate that QIIME2 visualizations (*.qzv) files and sbatch scripts will be made available in the Microbiome Hub folder on GoogleDrive prior to publication. All data will become publicly available via NCBI when published. Scripts for analyses will be available on GitHub. 
