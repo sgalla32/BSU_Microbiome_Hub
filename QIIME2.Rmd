@@ -43,11 +43,11 @@ You should now have an empty file called QIIME2_Import_Demux.sbatch. We are goin
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=user@domain.edu
 
-# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+#Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
 
 export TMPDIR=~/scratch
 
-# You can create a 'shortcut' to the folder you're going to be working out of:
+#You can create a 'shortcut' to the folder you're going to be working out of:
 
 16S=~/scratch/16S
 
@@ -71,7 +71,7 @@ qiime demux emp-paired \
 	--o-per-sample-sequences ${16S}/demux_output/demux.qza \
 	--o-error-correction-details ${16S}/demux_output/demux-details.qza
 
-# Summarize. This will summarize our data with visualization files (*.qzv) in QIIME2:
+#Summarize. This will summarize our data with visualization files (*.qzv) in QIIME2:
 
 qiime demux summarize \
   --i-data ${16S}/demux_output/demux.qza \
@@ -170,15 +170,15 @@ You should now have an empty file called QIIME2_DADA2.sbatch. We are going to cr
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=user@domain.edu
 
-# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+#Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
 
 export TMPDIR=~/scratch
 
-# You can create a 'shortcut' to the folder you're going to be working out of:
+#You can create a 'shortcut' to the folder you're going to be working out of:
 
 16S=~/scratch/16S
 
-# We are now going to denoise the data, cutting off the first 12 base pairs. 
+#We are now going to denoise the data, cutting off the first 12 base pairs. 
 qiime dada2 denoise-paired \
   --i-demultiplexed-seqs ${16S}/demux_output/demux.qza \
   --p-trim-left-f 12 \
@@ -190,25 +190,24 @@ qiime dada2 denoise-paired \
   --o-table ${16S}/demux_output/table-dada2.qza \
   --o-denoising-stats ${16S}/demux_output/stats-dada2.qza
 
-# Feature table
-# Here, make sure to use your metadata file, as opposed to your barcode file. 
+#Feature table
+#Here, make sure to use your metadata file, as opposed to your barcode file. 
 qiime feature-table summarize   \
   --i-table ${16S}/demux_output/table-dada2.qza \
   --o-visualization ${116S}/demux_output/table-dada2.qzv \
   --m-sample-metadata-file ${16S}/12581_20210414-100355.tsv
 
-# Representative sequences
+#Representative sequences
 qiime feature-table tabulate-seqs \
   --i-data ${16S}/demux_output/rep-seqs-dada2.qza \
   --o-visualization ${16S}/demux_output/rep-seqs-dada2.qzv
 
-# Denoising Stats
+#Denoising Stats
 qiime metadata tabulate \
   --m-input-file ${16S}/demux_output/stats-dada2.qza \
   --o-visualization ${16S}/demux_output/stats-dada2.qzv
 
-## Export ASV table
-
+#Export ASV table
 qiime tools export \
   --input-path ${16S}/demux_output/table-dada2.qza \
   --output-path ${16S}/exported-files
@@ -225,16 +224,16 @@ Once you have sorted your file paths that are specific to your configuration on 
 Now you're ready to run your second SBATCH file on Borah. Let's use the following commands: 
 
 ```markdown
-# Ensure that you call conda activate qiime2-2021.4 before you start. 
+#Ensure that you call conda activate qiime2-2021.4 before you start. 
 conda activate qiime2-2021.4
 
-# Submit your job:
+#Submit your job:
 sbatch QIIME2_DADA2.sbatch
 
-# Check in on your job:
+#Check in on your job:
 squeue
 
-# Cancel your job if necessary
+#Cancel your job if necessary
 scancel <jobID>
 
 ```
@@ -279,7 +278,7 @@ wget https://data.qiime2.org/2021.2/common/silva-138-99-tax-515-806.qza
 wget https://data.qiime2.org/2021.2/common/sepp-refs-silva-128.qza
 ```
 
-## SBatch for Taxonomy
+## Sbatch file for Taxonomy
 
 Let's open a text editor like nano where you can edit your document: 
 
@@ -302,15 +301,15 @@ You should now have an empty file called QIIME2_DADA2.sbatch. We are going to cr
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=user@domain.edu
 
-# Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
+#Ensure the temporary directory is in your scratch, so that big files don't take up too much space.
 
 export TMPDIR=~/scratch
 
-# You can create a 'shortcut' to the folder you're going to be working out of:
+#You can create a 'shortcut' to the folder you're going to be working out of:
 
 16S=~/scratch/16S
 
-# Taxonomy: Train the classifier
+#Taxonomy: Train the classifier
 qiime feature-classifier fit-classifier-naive-bayes \
   --i-reference-reads ${Sage_Grouse_16S}/silva-138-99-seqs-515-806.qza \
   --i-reference-taxonomy ${Sage_Grouse_16S}/silva-138-99-tax-515-806.qza \
@@ -338,5 +337,4 @@ qiime taxa barplot \
   --i-taxonomy ${Sage_Grouse_16S}/taxonomy.qza \
   --m-metadata-file ${Sage_Grouse_16S}/12842_20210216-155838.tsv \
   --o-visualization ${Sage_Grouse_16S}/taxa-bar-plots.qzv
-
-
+```
